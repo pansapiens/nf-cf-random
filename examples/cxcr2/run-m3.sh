@@ -18,7 +18,7 @@ mkdir -p results
 
 #nextflow run pansapiens/nf-cf-random \
 nextflow run "../../main.nf" \
-  -profile m3 \
+  -profile m3_bdi \
   --slurm_account yt41 \
   --samplesheet "samplesheet.csv" \
   --outdir "results" \
