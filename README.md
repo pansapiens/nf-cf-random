@@ -1,6 +1,6 @@
 # nf-cf-random
 
-Nextflow pipeline wrapping [CF-random_software](https://github.com/ncbi/CF-random_software): one samplesheet row per job, parallel runs across rows. Style matches [nf-ligand-bind](https://github.com/pansapiens/nf-ligand-bind) and [nf-binder-design](https://github.com/Australian-Protein-Design-Initiative/nf-binder-design) (manifest, Apptainer, profiles).
+Nextflow pipeline wrapping [CF-random_software](https://github.com/ncbi/CF-random_software): one samplesheet row per job, parallel runs across rows.
 
 ## Requirements
 
@@ -26,7 +26,9 @@ nextflow run main.nf -profile m3 \
 
 ## Samplesheet (CSV)
 
-Header row required. Column names match CF-random CLI flags **without** the leading `--**.
+Batches of CF-Random runs are defined via a `samplesheet.csv` with column names matching CF-random CLI flags (**without** the leading `--**). 
+
+> Note that `--fname` in CF-random usually points to a directory containing a `a3m` format MSA - here `fname` is the path **to** the .a3m file itself. 
 
 Rows whose **first character** (leftmost in the file, same order as the header) starts with `#` after trimming are skipped (comment lines).
 
@@ -48,7 +50,7 @@ Unused options can be **left empty** in the CSV (trailing commas are fine), or y
 | `pred1_range` | no | FS only: residue range in predictions vs PDB1 |
 | `pred2_range` | no | FS only: residue range in predictions vs PDB2 |
 
-For **`option == FS`**, the pipeline writes `range_fs_pairs_all.txt` before calling CF-random. Any of the four range columns that are empty default independently to `1-N`, where `N` is the maximum residue number in **pdb1** (BioPython). If all four are empty, they all become `1-N`.
+For **`option == FS`**, the pipeline writes `range_fs_pairs_all.txt` before calling CF-random. Any of the four range columns that are empty default independently to `1-N`, where `N` is the maximum residue number in **pdb1** (via BioPython). If all four are empty, they all become `1-N`.
 
 Run **`id`** (used for `publishDir` and `tag`):
 
@@ -59,51 +61,44 @@ Non-alphanumeric characters in `id` are replaced with `_`.
 
 Duplicate non-empty `pname` values are rejected at startup.
 
-## Example rows
+## Outputs
+
+Results from each CF-Random run are published under `results/<pname>/` (or another path if overrideen using `--outdir`).
+
+## Examples
+
+See the `examples/` directory for more detailed examples.
+
+## Example samplesheet rows
 
 Fold-switching (reference structures + MSA):
 
 ```csv
-option,fname,pdb1,pdb2,pdb1_range,pdb2_range,pred1_range,pred2_range
-FS,/path/to/2oug_C.a3m,/path/to/2oug_C.pdb,/path/to/6c6s_D.pdb,112-162,115-162,112-162,112-162
+pname,option,fname,pdb1,pdb2,pdb1_range,pdb2_range,pred1_range,pred2_range
+2oug_6c6s_FS,FS,/path/to/2oug_C.a3m,/path/to/2oug_C.pdb,/path/to/6c6s_D.pdb,112-162,115-162,112-162,112-162
 ```
 
 Same FS row with automatic full-length ranges (omit the four range columns or leave them empty):
 
 ```csv
-option,fname,pdb1,pdb2
-FS,/path/to/2oug_C.a3m,/path/to/2oug_C.pdb,/path/to/6c6s_D.pdb
+pname,option,fname,pdb1,pdb2
+2oug_6c6s_FS,FS,/path/to/2oug_C.a3m,/path/to/2oug_C.pdb,/path/to/6c6s_D.pdb
 ```
 
 Alternative conformation:
 
 ```csv
-option,fname,pdb1,pdb2,nMSA
-AC,/path/to/5olw_A.a3m,/path/to/5olw_A.pdb,/path/to/5olx_A.pdb,5
+pname,option,fname,pdb1,pdb2,nMSA
+5olw_5olx_AC,AC,/path/to/5olw_A.a3m,/path/to/5olw_A.pdb,/path/to/5olx_A.pdb,5
 ```
 
 Blind (no reference PDBs):
 
 ```csv
-option,fname,pname
-blind,/path/to/2vfx_L.a3m,Mad2_test
+pname,option,fname
+Mad2_test,blind,/path/to/2vfx_L.a3m
 ```
-
-### Blind mode and Foldseek
-
-Upstream README text about symlinking a Foldseek PDB library is misleading for current code: blind mode runs Foldseek **self-search** on predicted structures only. See [cf-random-blind-foldseek.md](cf-random-blind-foldseek.md).
-
-## Outputs
-
-Published under `params.outdir/<id>/` (prediction directories, CSV summaries, plots), depending on mode and success path (`successed_prediction`, `failed_prediction`, `blind_prediction`, `multimer_prediction`).
-
-## Project layout
-
-- `main.nf` – samplesheet parsing and workflow
-- `modules/cf_random.nf` – containerised `CF_RANDOM` process
-- `bin/generate_range_fs_pairs.py` – FS `range_fs_pairs_all.txt` generation
-- `conf/platforms/m3.config` – optional M3 Slurm / Apptainer binds
 
 ## Licence
 
-See repository licence (to be added if publishing).
+MIT
