@@ -22,5 +22,6 @@ nextflow run "../../main.nf" \
   --slurm_account yt41 \
   --samplesheet "samplesheet.csv" \
   --outdir "results" \
+  -resume \
   -with-report "results/report-${DATESTAMP}.html" \
   -with-trace "results/trace-${DATESTAMP}.txt"
