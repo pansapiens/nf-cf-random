@@ -35,7 +35,7 @@ Unused options can be **left empty** in the CSV (trailing commas are fine), or y
 | Column | Required | Description |
 |--------|----------|-------------|
 | `option` | yes | `AC`, `FS`, or `blind` |
-| `fname` | yes | **Recommended:** path to one **`.a3m` file** per row (MSA). Each job stages that file into its own folder (as `0.a3m` for ColabFold). **Alternatively:** path to an **MSA-only directory** (e.g. ColabFold output containing `0.a3m`)—avoid folders that also hold PDBs or other junk, which can break ColabFold |
+| `fname` | yes | **Recommended:** path to one **`.a3m` file** per row (MSA). Each job stages it into its own folder as **`{pname}.a3m`** (sanitised) when `pname` is set, or **`{run id}.a3m`** when `pname` is empty. **Alternatively:** path to an **MSA-only directory** (e.g. ColabFold output, often with `0.a3m`)—avoid folders that also hold PDBs or other junk, which can break ColabFold |
 | `pdb1` | AC / FS | Reference PDB (dominant fold) |
 | `pdb2` | AC / FS | Reference PDB (alternate fold) |
 | `pname` | no | Optional. When set, used as run **`id`** (and `publishDir`); **must be unique** |

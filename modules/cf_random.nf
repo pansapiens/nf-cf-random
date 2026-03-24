@@ -59,11 +59,12 @@ process CF_RANDOM {
     }
 
     def wrap_msa_dir = (meta.pname ?: 'a3m').toString().replaceAll(/[^A-Za-z0-9._-]+/, '_')
+    def msa_a3m_name = meta.pname ? "${wrap_msa_dir}.a3m" : "${meta.id}.a3m"
     def fname_setup = meta.get('fname_is_a3m_file', false) ? """
     # Single .a3m path: MSA-only folder for colabfold_batch (CF-random expects --fname as a directory name under cwd).
     _NXF_A3M_ABS=\$(readlink -f "${fname}")
     mkdir -p "${wrap_msa_dir}"
-    ln -sf "\${_NXF_A3M_ABS}" "${wrap_msa_dir}/0.a3m"
+    ln -sf "\${_NXF_A3M_ABS}" "${wrap_msa_dir}/${msa_a3m_name}"
     CF_RANDOM_FNAME_REL="${wrap_msa_dir}/"
 """ : """
     # Directory path: cwd = parent of staged MSA folder; fname = folder basename + /
