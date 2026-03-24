@@ -38,7 +38,7 @@ Unused options can be **left empty** in the CSV (trailing commas are fine), or y
 | `fname` | yes | **Recommended:** path to one **`.a3m` file** per row (MSA). Each job stages that file into its own folder (as `0.a3m` for ColabFold). **Alternatively:** path to an **MSA-only directory** (e.g. ColabFold output containing `0.a3m`)—avoid folders that also hold PDBs or other junk, which can break ColabFold |
 | `pdb1` | AC / FS | Reference PDB (dominant fold) |
 | `pdb2` | AC / FS | Reference PDB (alternate fold) |
-| `pname` | no | Optional. **Blind:** run `id` when set. **With `.a3m` `fname`:** names the per-job MSA staging folder; if empty, the folder is `a3m` |
+| `pname` | no | Optional. When set, used as run **`id`** (and `publishDir`); **must be unique** |
 | `nMSA` | no | Extra MSA samples (string integer, passed through to CF-random) |
 | `nENS` | no | Ensemble-related parameter |
 | `type` | no | ColabFold model: `ptm`, `monomer`, or `multimer` |
@@ -50,14 +50,14 @@ Unused options can be **left empty** in the CSV (trailing commas are fine), or y
 
 For **`option == FS`**, the pipeline writes `range_fs_pairs_all.txt` before calling CF-random. Any of the four range columns that are empty default independently to `1-N`, where `N` is the maximum residue number in **pdb1** (BioPython). If all four are empty, they all become `1-N`.
 
-Run **`id`** (used for `publishDir` and `tag`) is derived as:
+Run **`id`** (used for `publishDir` and `tag`):
 
-- **blind**: `pname` if set, otherwise the basename of `fname` (file or directory)
-- **AC / FS**: basename of `pdb1`, or `pname` / `fname` basename if `pdb1` were absent (AC/FS require `pdb1`/`pdb2` in this pipeline)
+- **`pname` set:** `pname` (then sanitised)
+- **`pname` empty:** `pdb1_basename_pdb2_basename_option_nMSA_nENS_type_rowIndex` using the row’s `option`, `nMSA`, `nENS`, `type`, and a **1-based index** over non-comment data rows. Missing `type` is treated as `ptm`; missing `nMSA` / `nENS` as `0`. For blind rows (no PDBs), `none` is used for the missing `pdb1` / `pdb2` basename slots.
 
 Non-alphanumeric characters in `id` are replaced with `_`.
 
-If two rows end up with the same `id` (for example two AC/FS rows sharing the same `pdb1` basename), results under `outdir/<id>/` can overwrite each other—use distinct `pdb1` basenames or split runs.
+Duplicate non-empty `pname` values are rejected at startup.
 
 ## Example rows
 

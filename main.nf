@@ -37,9 +37,29 @@ def samplesheet_row_is_comment(row) {
     return firstVal.startsWith('#')
 }
 
-def fname_basename(path_str) {
-    def p = path_str.replaceAll(/\/+$/, '')
-    return new File(p).name
+/** Non-empty `pname` must appear at most once (1-based data row indices, comment rows excluded). */
+def assert_unique_pnames(List rows) {
+    def seen = [:] as Map<String, Integer>
+    rows.eachWithIndex { row, i ->
+        def pname = cell(row, 'pname')
+        if (pname) {
+            def n = i + 1
+            if (seen.containsKey(pname)) {
+                error("Duplicate pname '${pname}' in samplesheet (data rows ${seen[pname]} and ${n})")
+            }
+            seen[pname] = n
+        }
+    }
+}
+
+/** When `pname` is empty: stable id from inputs, defaults, and 1-based row index (among non-comment data rows). */
+def fallback_id(row, int rowIndex, pdb1, pdb2, boolean use_pdb1, boolean use_pdb2) {
+    def pdb1_part = use_pdb1 ? pdb1.baseName : 'none'
+    def pdb2_part = use_pdb2 ? pdb2.baseName : 'none'
+    def nMSA = cell(row, 'nMSA') ?: '0'
+    def nENS = cell(row, 'nENS') ?: '0'
+    def type = cell(row, 'type') ?: 'ptm'
+    return "${pdb1_part}_${pdb2_part}_${cell(row, 'option')}_${nMSA}_${nENS}_${type}_${rowIndex}"
 }
 
 workflow {
@@ -56,7 +76,13 @@ workflow {
     Channel.fromPath(params.samplesheet)
         .splitCsv(header: true)
         .filter { row -> !samplesheet_row_is_comment(row) }
-        .map { row ->
+        .collect()
+        .map { rows ->
+            assert_unique_pnames(rows)
+            rows
+        }
+        .flatMap { rows -> rows.withIndex().collect { row, i -> tuple(row, i + 1) } }
+        .map { row, rowIndex ->
             def option = cell(row, 'option')
             if (!option) {
                 error("Samplesheet row missing required column 'option'")
@@ -73,9 +99,6 @@ workflow {
             if (option in ['AC', 'FS'] && (!pdb1_str || !pdb2_str)) {
                 error("option '${option}' requires non-empty pdb1 and pdb2")
             }
-            if (option == 'FS' && (!pdb1_str || !pdb2_str)) {
-                error("option FS requires non-empty pdb1 and pdb2")
-            }
 
             def use_pdb1 = pdb1_str != ''
             def use_pdb2 = pdb2_str != ''
@@ -87,12 +110,11 @@ workflow {
             def pdb2 = use_pdb2 ? file(pdb2_str, checkIfExists: true) : dummy_pdb2
             def fmname = use_fmname ? file(fmname_str, checkIfExists: true) : dummy_fmname
 
-            def fname_base = fname_basename(fname_str)
             def id = ''
-            if (option == 'blind') {
-                id = pname ?: fname_base
+            if (pname) {
+                id = pname
             } else {
-                id = use_pdb1 ? pdb1.baseName : (pname ?: fname_base)
+                id = fallback_id(row, rowIndex, pdb1, pdb2, use_pdb1, use_pdb2)
             }
             id = id.replaceAll(/[^A-Za-z0-9._-]+/, '_')
 
