@@ -12,14 +12,15 @@ export APPTAINER_CACHEDIR=/scratch2/yt41/${USER}/apptainer_cache
 export NXF_APPTAINER_CACHEDIR=$APPTAINER_CACHEDIR
 mkdir -p $APPTAINER_CACHEDIR
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NF_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+DATESTAMP=$(date +%Y%m%d_%H%M%S)
 
-cd "${SCRIPT_DIR}"
+mkdir -p results
 
-nextflow run "${NF_ROOT}/main.nf" \
+#nextflow run pansapiens/nf-cf-random \
+nextflow run "../../main.nf" \
   -profile m3 \
-  -work-dir "${SCRIPT_DIR}/work" \
   --slurm_account yt41 \
-  --samplesheet "${SCRIPT_DIR}/samplesheet.csv" \
-  --outdir "${SCRIPT_DIR}/results"
+  --samplesheet "samplesheet.csv" \
+  --outdir "results" \
+  -with-report "results/report-${DATESTAMP}.html" \
+  -with-trace "results/trace-${DATESTAMP}.txt"
