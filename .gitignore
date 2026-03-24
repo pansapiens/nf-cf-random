@@ -1,0 +1,7 @@
+.nextflow
+.nextflow.log*
+work
+results*/
+
+.venv
+__pycache__

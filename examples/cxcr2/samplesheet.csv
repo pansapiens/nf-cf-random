@@ -1,0 +1,4 @@
+option,fname,pname,pdb1,pdb2,nMSA
+blind,input/cxcr2/bfd.mgnify30.metaeuk30.smag30.a3m,cxcr2,,,
+FS,input/cxcr2/bfd.mgnify30.metaeuk30.smag30.a3m,cxcr2,input/cxcr2_inactive.pdb,input/cxcr2_active.pdb,
+AC,input/cxcr2/bfd.mgnify30.metaeuk30.smag30.a3m,cxcr2,input/cxcr2_inactive.pdb,input/cxcr2_active.pdb,5
